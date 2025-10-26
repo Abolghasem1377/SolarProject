@@ -5,7 +5,11 @@ import { FaLinkedin, FaInstagram, FaEnvelope } from "react-icons/fa";
 export default function Home() {
   const [time, setTime] = useState(new Date());
   const [lang, setLang] = useState("en");
-  const [formData, setFormData] = useState({ name: "", email: "", message: "" });
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    message: "",
+  });
   const [status, setStatus] = useState("idle");
 
   useEffect(() => {
@@ -88,12 +92,12 @@ export default function Home() {
         backgroundAttachment: "fixed",
       }}
     >
-      {/* ⚡ background beams */}
+      {/* ⚡️ Background energy beams */}
       <div className="absolute inset-0 overflow-hidden">
         {[...Array(6)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute h-[2px] w-[300px] sm:w-[400px] bg-gradient-to-r from-yellow-300 via-orange-400 to-transparent opacity-70 rounded-full"
+            className="absolute h-[2px] w-[400px] bg-gradient-to-r from-yellow-300 via-orange-400 to-transparent opacity-70 rounded-full"
             style={{
               top: `${20 + i * 15}%`,
               left: "-400px",
@@ -112,25 +116,27 @@ export default function Home() {
 
       {/* 🕒 Time */}
       <motion.div
-        className="absolute top-6 sm:top-8 z-20 bg-white/70 backdrop-blur-md px-5 sm:px-8 py-3 sm:py-4 rounded-2xl shadow-xl border border-white/40 text-center"
+        className="absolute top-6 z-20 bg-white/70 backdrop-blur-md px-6 py-3 rounded-2xl shadow-xl border border-white/40 text-center"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1 }}
       >
-        <p className="text-xl sm:text-3xl font-bold text-green-700">{formattedTime}</p>
+        <p className="text-2xl sm:text-3xl font-bold text-green-700">
+          {formattedTime}
+        </p>
         <p className="text-sm sm:text-md text-gray-800 mt-1">{formattedDate}</p>
       </motion.div>
 
-      {/* 🌍 Language buttons */}
-      <div className="absolute top-6 sm:top-8 right-4 sm:right-8 flex space-x-2 sm:space-x-3 z-20">
+      {/* 🌍 Language buttons (کوچیک‌تر در موبایل) */}
+      <div className="absolute top-4 right-4 sm:top-6 sm:right-8 flex space-x-1 sm:space-x-3 z-[50]">
         {["en", "fa", "ro"].map((code) => (
           <button
             key={code}
             onClick={() => setLang(code)}
-            className={`px-2 sm:px-3 py-1 rounded-md text-sm sm:text-base font-semibold transition-all ${
+            className={`px-2 sm:px-3 py-[2px] sm:py-1 rounded-md text-xs sm:text-sm font-semibold transition-all duration-300 ${
               lang === code
                 ? "bg-green-600 text-white shadow-md scale-105"
-                : "bg-white/70 text-green-700 hover:bg-green-100"
+                : "bg-white/80 text-green-700 hover:bg-green-100"
             }`}
           >
             {code.toUpperCase()}
@@ -141,17 +147,17 @@ export default function Home() {
       {/* 🌞 Hero */}
       <motion.div
         dir={lang === "fa" ? "rtl" : "ltr"}
-        className={`relative z-10 text-center p-6 sm:p-10 bg-white/40 backdrop-blur-lg rounded-3xl shadow-2xl max-w-[90%] sm:max-w-3xl border border-white/40 mt-28 transition-all duration-500 ${
+        className={`relative z-10 text-center p-6 sm:p-10 bg-white/40 backdrop-blur-lg rounded-3xl shadow-2xl max-w-[90%] sm:max-w-3xl border border-white/40 mt-24 transition-all duration-500 ${
           lang === "fa" ? "font-[Vazirmatn]" : ""
         }`}
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1.2 }}
       >
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-green-700 mb-4 sm:mb-6 drop-shadow-lg">
+        <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold text-green-700 mb-4 sm:mb-6 drop-shadow-lg">
           {texts[lang].title}
         </h1>
-        <p className="text-base sm:text-lg md:text-xl text-gray-700 mb-6 sm:mb-8 leading-relaxed">
+        <p className="text-gray-700 text-base sm:text-lg md:text-xl mb-6 sm:mb-8 leading-relaxed">
           {texts[lang].description}
         </p>
         <motion.button
@@ -160,7 +166,7 @@ export default function Home() {
             boxShadow: "0 0 40px rgba(16,185,129,0.6)",
           }}
           whileTap={{ scale: 0.95 }}
-          className="px-6 sm:px-10 py-2 sm:py-4 text-base sm:text-lg font-semibold text-white bg-gradient-to-r from-green-500 to-emerald-600 rounded-full shadow-lg hover:shadow-2xl transition-all duration-300"
+          className="px-8 sm:px-10 py-3 sm:py-4 text-base sm:text-lg font-semibold text-white bg-gradient-to-r from-green-500 to-emerald-600 rounded-full shadow-lg hover:shadow-2xl transition-all duration-300"
         >
           {texts[lang].button}
         </motion.button>
@@ -169,7 +175,7 @@ export default function Home() {
       {/* 📬 Contact Section */}
       <motion.div
         dir={lang === "fa" ? "rtl" : "ltr"}
-        className="relative z-20 mt-16 mb-10 w-[90%] max-w-2xl bg-white/70 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/40 p-6 sm:p-8 text-center"
+        className="relative z-20 mt-16 sm:mt-24 mb-10 w-full max-w-lg sm:max-w-2xl bg-white/70 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/40 p-6 sm:p-8 text-center"
         initial={{ opacity: 0, y: 60 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
@@ -178,14 +184,17 @@ export default function Home() {
         <h2 className="text-2xl sm:text-3xl font-bold text-green-700 mb-6">
           {texts[lang].contactTitle}
         </h2>
-        <form onSubmit={handleSubmit} className="flex flex-col space-y-4 text-left">
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col space-y-4 text-left"
+        >
           <input
             type="text"
             name="name"
             placeholder={texts[lang].name}
             value={formData.name}
             onChange={handleChange}
-            className="px-4 py-2 sm:py-3 rounded-xl border border-green-300 focus:outline-none focus:ring-2 focus:ring-green-400 bg-white/90 text-sm sm:text-base"
+            className="px-4 py-3 rounded-xl border border-green-300 focus:outline-none focus:ring-2 focus:ring-green-400 bg-white/90 transition-all duration-200"
           />
           <input
             type="email"
@@ -193,7 +202,7 @@ export default function Home() {
             placeholder={texts[lang].email}
             value={formData.email}
             onChange={handleChange}
-            className="px-4 py-2 sm:py-3 rounded-xl border border-green-300 focus:outline-none focus:ring-2 focus:ring-green-400 bg-white/90 text-sm sm:text-base"
+            className="px-4 py-3 rounded-xl border border-green-300 focus:outline-none focus:ring-2 focus:ring-green-400 bg-white/90 transition-all duration-200"
           />
           <textarea
             rows="4"
@@ -201,13 +210,13 @@ export default function Home() {
             placeholder={texts[lang].message}
             value={formData.message}
             onChange={handleChange}
-            className="px-4 py-2 sm:py-3 rounded-xl border border-green-300 focus:outline-none focus:ring-2 focus:ring-green-400 bg-white/90 text-sm sm:text-base resize-none"
+            className="px-4 py-3 rounded-xl border border-green-300 focus:outline-none focus:ring-2 focus:ring-green-400 bg-white/90 transition-all duration-200 resize-none"
           />
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             disabled={status === "sending"}
-            className={`w-full mt-3 py-2 sm:py-3 text-base sm:text-lg font-semibold rounded-xl shadow-lg transition-all duration-300 ${
+            className={`w-full mt-3 py-3 text-base sm:text-lg font-semibold rounded-xl shadow-lg transition-all duration-300 ${
               status === "sending"
                 ? "bg-yellow-400 text-white"
                 : "bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:shadow-2xl"
@@ -225,7 +234,7 @@ export default function Home() {
 
       {/* 🌐 Social Icons */}
       <motion.div
-        className="flex space-x-6 mb-12 z-20 text-2xl sm:text-3xl"
+        className="flex space-x-6 mb-12 z-20"
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 1 }}
@@ -235,7 +244,7 @@ export default function Home() {
             key={i}
             href="#"
             whileHover={{ scale: 1.3 }}
-            className="text-green-700 hover:text-green-600 transition-colors"
+            className="text-2xl sm:text-3xl text-green-700 hover:text-green-600 transition-colors"
           >
             <Icon />
           </motion.a>
