@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { HiMenu, HiX } from "react-icons/hi"; // آیکون منو و بستن
+import { HiMenu, HiX } from "react-icons/hi"; // آیکون‌های منو
 
 // صفحات پروژه
 import Home from "./pages/Home";
@@ -81,7 +81,7 @@ export default function App() {
           </div>
         </nav>
 
-        {/* 📱 منوی بازشونده در موبایل */}
+        {/* 📱 منوی بازشونده موبایل */}
         <AnimatePresence>
           {isMenuOpen && (
             <motion.div
@@ -89,7 +89,7 @@ export default function App() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
-              className="md:hidden bg-white shadow-lg border-t border-green-100 flex flex-col text-center text-lg font-medium py-4 space-y-4 absolute w-full z-10"
+              className="md:hidden bg-white shadow-lg border-t border-green-100 flex flex-col text-center text-lg font-medium py-4 space-y-4 absolute w-full z-[9999]"
             >
               <Link
                 to="/"
@@ -142,7 +142,7 @@ export default function App() {
         <AnimatePresence>
           {isLogoOpen && (
             <motion.div
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[99999]"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
