@@ -157,7 +157,15 @@ export default function Calculator() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-sky-50 to-blue-100 flex flex-col items-center justify-center font-[Poppins] px-4 py-8">
+    <div
+  className="min-h-screen flex flex-col items-center justify-center font-[Poppins] px-4 py-8 bg-fixed bg-cover bg-center"
+  style={{
+    backgroundImage: "url('/solar-bg.jpg')",
+    backgroundBlendMode: "lighten",
+  }}
+>
+
+
       <motion.div
         className="bg-white/90 backdrop-blur-md p-8 sm:p-10 rounded-3xl shadow-2xl border border-white/40 w-full max-w-3xl"
         initial={{ opacity: 0, y: 30 }}
