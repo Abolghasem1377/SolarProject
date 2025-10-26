@@ -114,20 +114,20 @@ export default function Home() {
         ))}
       </div>
 
-      {/* 🕒 Time */}
+      {/* 🕒 Time (smaller version) */}
       <motion.div
-        className="absolute top-6 z-20 bg-white/70 backdrop-blur-md px-6 py-3 rounded-2xl shadow-xl border border-white/40 text-center"
+        className="absolute top-4 z-20 bg-white/70 backdrop-blur-md px-4 py-2 sm:px-6 sm:py-3 rounded-xl shadow-lg border border-white/40 text-center"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1 }}
       >
-        <p className="text-2xl sm:text-3xl font-bold text-green-700">
+        <p className="text-xl sm:text-2xl font-bold text-green-700">
           {formattedTime}
         </p>
-        <p className="text-sm sm:text-md text-gray-800 mt-1">{formattedDate}</p>
+        <p className="text-xs sm:text-sm text-gray-800 mt-1">{formattedDate}</p>
       </motion.div>
 
-      {/* 🌍 Language buttons (کوچیک‌تر در موبایل) */}
+      {/* 🌍 Language buttons */}
       <div className="absolute top-4 right-4 sm:top-6 sm:right-8 flex space-x-1 sm:space-x-3 z-[50]">
         {["en", "fa", "ro"].map((code) => (
           <button
@@ -144,7 +144,7 @@ export default function Home() {
         ))}
       </div>
 
-      {/* 🌞 Hero */}
+      {/* 🌞 Hero Section */}
       <motion.div
         dir={lang === "fa" ? "rtl" : "ltr"}
         className={`relative z-10 text-center p-6 sm:p-10 bg-white/40 backdrop-blur-lg rounded-3xl shadow-2xl max-w-[90%] sm:max-w-3xl border border-white/40 mt-24 transition-all duration-500 ${
