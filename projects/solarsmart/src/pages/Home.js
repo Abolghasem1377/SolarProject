@@ -114,9 +114,9 @@ export default function Home() {
         ))}
       </div>
 
-      {/* 🕒 Time (smaller version) */}
+      {/* 🕒 Time */}
       <motion.div
-        className="absolute top-4 z-20 bg-white/70 backdrop-blur-md px-4 py-2 sm:px-6 sm:py-3 rounded-xl shadow-lg border border-white/40 text-center"
+        className="absolute top-4 right-4 sm:right-8 z-20 bg-white/70 backdrop-blur-md px-4 py-2 sm:px-6 sm:py-3 rounded-xl shadow-lg border border-white/40 text-center"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1 }}
@@ -127,8 +127,8 @@ export default function Home() {
         <p className="text-xs sm:text-sm text-gray-800 mt-1">{formattedDate}</p>
       </motion.div>
 
-      {/* 🌍 Language buttons */}
-      <div className="absolute top-4 right-4 sm:top-6 sm:right-8 flex space-x-1 sm:space-x-3 z-[50]">
+      {/* 🌍 Language buttons (moved to left) */}
+      <div className="absolute top-4 left-4 sm:top-6 sm:left-8 flex space-x-1 sm:space-x-3 z-[50]">
         {["en", "fa", "ro"].map((code) => (
           <button
             key={code}
