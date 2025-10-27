@@ -1,14 +1,17 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-export default function Login() {
+export default function Login({ setUser }) {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
-  const [lang, setLang] = useState("en"); // 🌍 زبان پیش‌فرض: انگلیسی
+  const [lang, setLang] = useState("en");
 
-  // 🌐 ترجمه‌ها
+  // 📡 آدرس سرور بک‌اند
+  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:4000";
+
+  // 🌍 ترجمه‌ها
   const texts = {
     en: {
       title: "🔐 Login to your account",
@@ -48,7 +51,7 @@ export default function Login() {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    fetch("https://solarsmart-api.onrender.com/api/login", {
+    fetch(`${API_URL}/api/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
@@ -56,10 +59,17 @@ export default function Login() {
       .then((res) => res.json())
       .then((data) => {
         if (data.token) {
+          // ذخیره در localStorage
           localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user));
+
+          // 🔥 بروزرسانی وضعیت در App.js
+          if (setUser) setUser(data.user);
+
           setMessage(texts[lang].success);
-          setTimeout(() => navigate("/calculator"), 1000);
+
+          // هدایت به داشبورد یا ماشین حساب
+          setTimeout(() => navigate("/dashboard"), 1000);
         } else {
           setMessage(texts[lang].fail);
         }
@@ -75,33 +85,18 @@ export default function Login() {
       >
         {/* 🌍 انتخاب زبان */}
         <div className="absolute top-4 right-4 flex space-x-2">
-          <button
-            type="button"
-            onClick={() => setLang("en")}
-            className={`text-sm px-2 py-1 rounded ${
-              lang === "en" ? "bg-green-600 text-white" : "bg-gray-100"
-            }`}
-          >
-            EN
-          </button>
-          <button
-            type="button"
-            onClick={() => setLang("fa")}
-            className={`text-sm px-2 py-1 rounded ${
-              lang === "fa" ? "bg-green-600 text-white" : "bg-gray-100"
-            }`}
-          >
-            فارسی
-          </button>
-          <button
-            type="button"
-            onClick={() => setLang("ro")}
-            className={`text-sm px-2 py-1 rounded ${
-              lang === "ro" ? "bg-green-600 text-white" : "bg-gray-100"
-            }`}
-          >
-            Roman
-          </button>
+          {["en", "fa", "ro"].map((code) => (
+            <button
+              key={code}
+              type="button"
+              onClick={() => setLang(code)}
+              className={`text-sm px-2 py-1 rounded ${
+                lang === code ? "bg-green-600 text-white" : "bg-gray-100"
+              }`}
+            >
+              {code === "en" ? "EN" : code === "fa" ? "فارسی" : "Roman"}
+            </button>
+          ))}
         </div>
 
         <h2 className="text-2xl font-bold text-center text-green-700 mb-6 mt-6">
@@ -118,14 +113,18 @@ export default function Login() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className="w-full border border-gray-300 rounded-xl px-4 py-2 mb-4 focus:ring-2 focus:ring-green-400"
+          required
         />
+
         <input
           type="password"
           placeholder={texts[lang].password}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className="w-full border border-gray-300 rounded-xl px-4 py-2 mb-4 focus:ring-2 focus:ring-green-400"
+          required
         />
+
         <button
           type="submit"
           className="w-full bg-green-600 text-white rounded-xl py-2 hover:bg-green-700 transition"

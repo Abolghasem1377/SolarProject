@@ -7,7 +7,7 @@ import {
 } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { HiMenu, HiX } from "react-icons/hi";
-import ProtectedRoute from "./components/ProtectedRoute";
+import ProtectedRoute from "./components/ProtectedRoute"; // ✅ مسیر درست
 
 // 📄 صفحات پروژه
 import Home from "./pages/Home";
@@ -188,11 +188,18 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/users"
+              element={
+                <ProtectedRoute>
+                  <Users />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/ideas" element={<EconomicIdeas />} />
-            <Route path="/users" element={<Users />} />
             <Route path="/about" element={<About />} />
             <Route path="/signup" element={<Signup />} />
-            <Route path="/login" element={<Login />} />
+            <Route path="/login" element={<Login setUser={setUser} />} />
           </Routes>
         </main>
 
