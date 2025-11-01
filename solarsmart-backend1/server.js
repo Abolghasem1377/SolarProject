@@ -28,7 +28,7 @@ pool
 
 const SECRET = "solar_secret_key";
 
-// ✅ Create table if not exists
+// ✅ Create tables if not exists
 (async () => {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
@@ -36,12 +36,23 @@ const SECRET = "solar_secret_key";
       name VARCHAR(100),
       email VARCHAR(100) UNIQUE,
       password VARCHAR(200),
-      gender VARCHAR(10)
+      gender VARCHAR(10),
+      role VARCHAR(50) DEFAULT 'user'
     );
   `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS login_logs (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER REFERENCES users(id),
+      login_time TIMESTAMP DEFAULT NOW()
+    );
+  `);
+
+  console.log("✅ Tables ready");
 })();
 
-// ✅ مسیر تست ساده برای بررسی سلامت سرور
+// ✅ Test route
 app.get("/api/test", (req, res) => {
   res.json({ message: "✅ Backend is alive!" });
 });
@@ -60,7 +71,7 @@ app.post("/api/register", async (req, res) => {
     const hashed = await bcrypt.hash(password, 10);
 
     const result = await pool.query(
-      "INSERT INTO users (name, email, password, gender) VALUES ($1, $2, $3, $4) RETURNING id, name, email, gender",
+      "INSERT INTO users (name, email, password, gender) VALUES ($1, $2, $3, $4) RETURNING id, name, email, gender, role",
       [name, email, hashed, gender]
     );
 
@@ -76,7 +87,7 @@ app.post("/api/register", async (req, res) => {
   }
 });
 
-// ✅ Login route
+// ✅ Login route + Save login log
 app.post("/api/login", async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password)
@@ -91,9 +102,17 @@ app.post("/api/login", async (req, res) => {
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(401).json({ error: "Incorrect password" });
 
-    const token = jwt.sign({ id: user.id, email: user.email }, SECRET, {
-      expiresIn: "1h",
-    });
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      SECRET,
+      { expiresIn: "1h" }
+    );
+
+    // ✅ Save login time in login_logs
+    await pool.query(
+      "INSERT INTO login_logs (user_id) VALUES ($1)",
+      [user.id]
+    );
 
     res.json({ token, user });
   } catch (err) {
@@ -102,18 +121,24 @@ app.post("/api/login", async (req, res) => {
   }
 });
 
-// ✅ Stats route
-app.get("/api/stats", async (req, res) => {
+// ✅ Admin-only route for login history
+app.get("/api/login-logs", async (req, res) => {
   try {
-    const result = await pool.query("SELECT id, name, email, gender FROM users ORDER BY id DESC");
-    const totalUsers = result.rows.length;
-    const latestUsers = result.rows.slice(0, 5);
-    res.json({ totalUsers, latestUsers });
+    const result = await pool.query(`
+      SELECT login_logs.id, users.name, users.email, login_logs.login_time
+      FROM login_logs
+      JOIN users ON users.id = login_logs.user_id
+      ORDER BY login_logs.id DESC
+    `);
+
+    res.json(result.rows);
   } catch (err) {
-    console.error("❌ Stats error:", err);
-    res.status(500).send("Error fetching stats");
+    console.error("❌ Logs fetch error:", err);
+    res.status(500).send("Error fetching login logs");
   }
 });
 
 // ✅ Start server
-app.listen(port, () => console.log(`🚀 Backend running at http://localhost:${port}`));
+app.listen(port, () =>
+  console.log(`🚀 Backend running at http://localhost:${port}`)
+);
