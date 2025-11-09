@@ -5,7 +5,6 @@ export default function Users() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
 
-  // گرفتن توکن ذخیره‌شده از localStorage
   const token = useMemo(() => localStorage.getItem("token") || "", []);
 
   useEffect(() => {
@@ -16,7 +15,7 @@ export default function Users() {
         setLoading(true);
         setErr("");
 
-        // 📌 فقط اگر کاربر ادمین است اجازه بفرستیم
+        // بررسی نقش کاربر
         const user = JSON.parse(localStorage.getItem("user") || "{}");
         if (user.role !== "admin") {
           setErr("Access denied: admin only");
@@ -24,15 +23,18 @@ export default function Users() {
           return;
         }
 
-        const res = await fetch("/api/users", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            // اگر توکن داریم یا نقش ادمین است، هدر اضافه کن
-            Authorization: "Bearer admin",
-          },
-          signal: controller.signal,
-        });
+        // ✅ آدرس واقعی سرور Render
+        const res = await fetch(
+          "https://solarsmart-backend-new.onrender.com/api/users",
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: token ? `Bearer ${token}` : "",
+            },
+            signal: controller.signal,
+          }
+        );
 
         if (!res.ok) {
           const text = await res.text();
@@ -43,7 +45,8 @@ export default function Users() {
         const list = Array.isArray(data) ? data : data.users || [];
         setUsers(list);
       } catch (e) {
-        if (e.name !== "AbortError") setErr(e.message || "Failed to load users");
+        if (e.name !== "AbortError")
+          setErr(e.message || "Failed to load users");
       } finally {
         setLoading(false);
       }
@@ -80,7 +83,7 @@ export default function Users() {
       <div className="overflow-x-auto">
         <table className="min-w-full text-left text-sm">
           <thead>
-            <tr className="border-b">
+            <tr className="border-b bg-green-50">
               <th className="py-3 pr-4">#</th>
               <th className="py-3 pr-4">Name</th>
               <th className="py-3 pr-4">Email</th>
@@ -90,9 +93,12 @@ export default function Users() {
           </thead>
           <tbody>
             {users.map((u, i) => (
-              <tr key={u.id || u._id || i} className="border-b last:border-0">
+              <tr
+                key={u.id || i}
+                className="border-b last:border-0 hover:bg-green-50"
+              >
                 <td className="py-2 pr-4">{i + 1}</td>
-                <td className="py-2 pr-4">{u.name || u.fullName || "-"}</td>
+                <td className="py-2 pr-4">{u.name || "-"}</td>
                 <td className="py-2 pr-4">{u.email || "-"}</td>
                 <td className="py-2 pr-4 capitalize">{u.gender || "-"}</td>
                 <td className="py-2 pr-4 uppercase">{u.role || "USER"}</td>
