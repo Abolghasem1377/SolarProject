@@ -10,7 +10,6 @@ export default function Users() {
   useEffect(() => {
     const controller = new AbortController();
 
-    // تابع داخل useEffect تعریف شده → وابستگی گم‌شده نداریم
     const load = async () => {
       try {
         setLoading(true);
