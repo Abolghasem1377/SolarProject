@@ -1,12 +1,11 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 
 export default function Users() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
 
-  // 📦 دریافت توکن JWT ذخیره‌شده
-  const token = useMemo(() => localStorage.getItem("token") || "", []);
+  const BACKEND_URL = "https://solarsmart-backend-new.onrender.com"; // ✅ لینک واقعی Render
 
   useEffect(() => {
     const controller = new AbortController();
@@ -16,7 +15,7 @@ export default function Users() {
         setLoading(true);
         setErr("");
 
-        // ✅ بررسی نقش کاربر (فقط ادمین مجاز است)
+        // بررسی نقش کاربر از localStorage
         const user = JSON.parse(localStorage.getItem("user") || "{}");
         if (!user || user.role !== "admin") {
           setErr("Access denied: admin only 🚫");
@@ -24,15 +23,9 @@ export default function Users() {
           return;
         }
 
-        // ✅ آدرس واقعی سرور PostgreSQL روی Render
-        const API_URL = "https://solarsmart-backend-new.onrender.com/api/users";
-
-        const res = await fetch(API_URL, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
+        // 📡 درخواست به Render
+        const res = await fetch(`${BACKEND_URL}/api/users`, {
+          headers: { "Content-Type": "application/json" },
           signal: controller.signal,
         });
 
@@ -42,13 +35,10 @@ export default function Users() {
         }
 
         const data = await res.json();
-        const list = Array.isArray(data) ? data : data.users || [];
-        setUsers(list);
+        setUsers(Array.isArray(data) ? data : []);
       } catch (e) {
-        if (e.name !== "AbortError") {
-          console.error("❌ Fetch error:", e);
+        if (e.name !== "AbortError")
           setErr(e.message || "Failed to load users");
-        }
       } finally {
         setLoading(false);
       }
@@ -56,9 +46,8 @@ export default function Users() {
 
     load();
     return () => controller.abort();
-  }, [token]);
+  }, []);
 
-  // ✅ حالت‌های مختلف نمایش
   if (loading)
     return (
       <div className="max-w-4xl mx-auto p-6 bg-white rounded-xl shadow text-center">
@@ -80,11 +69,10 @@ export default function Users() {
       </div>
     );
 
-  // ✅ نمایش جدول کاربران
   return (
     <div className="max-w-5xl mx-auto p-6 bg-white rounded-xl shadow">
       <h1 className="text-2xl font-bold text-green-700 mb-4 text-center">
-        👥 Users List
+        👥 Registered Users
       </h1>
 
       <div className="overflow-x-auto">
@@ -95,22 +83,15 @@ export default function Users() {
               <th className="py-3 pr-4">Name</th>
               <th className="py-3 pr-4">Email</th>
               <th className="py-3 pr-4">Gender</th>
-              <th className="py-3 pr-4">Role</th>
             </tr>
           </thead>
           <tbody>
             {users.map((u, i) => (
-              <tr
-                key={u.id || i}
-                className="border-b last:border-0 hover:bg-green-50 transition"
-              >
+              <tr key={u.id || i} className="border-b hover:bg-green-50">
                 <td className="py-2 pr-4">{i + 1}</td>
                 <td className="py-2 pr-4">{u.name || "-"}</td>
                 <td className="py-2 pr-4">{u.email || "-"}</td>
                 <td className="py-2 pr-4 capitalize">{u.gender || "-"}</td>
-                <td className="py-2 pr-4 uppercase text-gray-600">
-                  {u.role || "USER"}
-                </td>
               </tr>
             ))}
           </tbody>
