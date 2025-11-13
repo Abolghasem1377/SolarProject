@@ -6,16 +6,16 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 
-// ✅ Load environment variables
+// Load environment variables
 dotenv.config();
 const app = express();
 const port = process.env.PORT || 4000;
 
-// ✅ Middleware
+// Middleware
 app.use(cors());
 app.use(express.json());
 
-// ✅ PostgreSQL connection
+// PostgreSQL connection
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.SSL === "true" ? { rejectUnauthorized: false } : false,
@@ -28,7 +28,7 @@ pool
 
 const SECRET = "solar_secret_key";
 
-// ✅ Create table if not exists
+// Create table if not exists
 (async () => {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
@@ -41,12 +41,12 @@ const SECRET = "solar_secret_key";
   `);
 })();
 
-// ✅ مسیر تست ساده برای بررسی سلامت سرور
+// Test backend
 app.get("/api/test", (req, res) => {
   res.json({ message: "✅ Backend is alive!" });
 });
 
-// ✅ Register route
+// Register
 app.post("/api/register", async (req, res) => {
   const { name, email, password, gender } = req.body;
   if (!name || !email || !password || !gender)
@@ -76,7 +76,7 @@ app.post("/api/register", async (req, res) => {
   }
 });
 
-// ✅ Login route
+// Login
 app.post("/api/login", async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password)
@@ -102,10 +102,25 @@ app.post("/api/login", async (req, res) => {
   }
 });
 
-// ✅ Stats route
+// 🚀 GET ALL USERS (این روت گم شده بود!)
+app.get("/api/users", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT id, name, email, gender FROM users ORDER BY id ASC"
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("❌ Users fetch error:", err);
+    res.status(500).json({ error: "Error fetching users" });
+  }
+});
+
+// Stats
 app.get("/api/stats", async (req, res) => {
   try {
-    const result = await pool.query("SELECT id, name, email, gender FROM users ORDER BY id DESC");
+    const result = await pool.query(
+      "SELECT id, name, email, gender FROM users ORDER BY id DESC"
+    );
     const totalUsers = result.rows.length;
     const latestUsers = result.rows.slice(0, 5);
     res.json({ totalUsers, latestUsers });
@@ -115,5 +130,7 @@ app.get("/api/stats", async (req, res) => {
   }
 });
 
-// ✅ Start server
-app.listen(port, () => console.log(`🚀 Backend running at http://localhost:${port}`));
+// Start server
+app.listen(port, () =>
+  console.log(`🚀 Backend running at http://localhost:${port}`)
+);
