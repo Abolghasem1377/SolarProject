@@ -1,4 +1,8 @@
-// ✅ Import libraries
+// =======================
+//  SOLARSMART BACKEND
+//  Login Tracking Enabled
+// =======================
+
 import express from "express";
 import cors from "cors";
 import pg from "pg";
@@ -6,29 +10,31 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 
-// Load environment variables
 dotenv.config();
-const app = express();
-const port = process.env.PORT || 4000;
 
-// Middleware
+const app = express();
+const PORT = process.env.PORT || 4000;
+
 app.use(cors());
 app.use(express.json());
 
-// PostgreSQL connection
+// =======================
+//  PostgreSQL
+// =======================
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.SSL === "true" ? { rejectUnauthorized: false } : false,
 });
 
-pool
-  .connect()
+pool.connect()
   .then(() => console.log("✅ Connected to PostgreSQL"))
-  .catch((err) => console.error("❌ Connection error:", err));
+  .catch((err) => console.error("❌ Database connection error:", err));
 
 const SECRET = "solar_secret_key";
 
-// Create table if not exists
+// =======================
+//  Ensure Tables Exist
+// =======================
 (async () => {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
@@ -36,129 +42,105 @@ const SECRET = "solar_secret_key";
       name VARCHAR(100),
       email VARCHAR(100) UNIQUE,
       password VARCHAR(200),
-      gender VARCHAR(10)
+      gender VARCHAR(10),
+      role VARCHAR(20) DEFAULT 'user'
     );
   `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS login_logs (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER REFERENCES users(id),
+      login_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  console.log("✅ All tables are ready");
 })();
 
-// Test backend
+// =======================
+//  Test Route
+// =======================
 app.get("/api/test", (req, res) => {
-  res.json({ message: "✅ Backend is alive!" });
+  res.json({ message: "Backend OK ✔" });
 });
 
-// Register
+// =======================
+//  Register Route
+// =======================
 app.post("/api/register", async (req, res) => {
   const { name, email, password, gender } = req.body;
+
   if (!name || !email || !password || !gender)
-    return res.status(400).json({ error: "All fields are required" });
+    return res.status(400).json({ error: "All fields required" });
 
   try {
-    const check = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
-    if (check.rows.length > 0)
+    const exists = await pool.query(
+      "SELECT * FROM users WHERE email=$1", 
+      [email]
+    );
+
+    if (exists.rows.length > 0)
       return res.status(400).json({ error: "Email already registered" });
 
     const hashed = await bcrypt.hash(password, 10);
 
     const result = await pool.query(
-      "INSERT INTO users (name, email, password, gender) VALUES ($1, $2, $3, $4) RETURNING id, name, email, gender",
+      `INSERT INTO users (name, email, password, gender) 
+       VALUES ($1,$2,$3,$4) RETURNING id,name,email,gender,role`,
       [name, email, hashed, gender]
     );
 
-    const user = result.rows[0];
-    const token = jwt.sign({ id: user.id, email: user.email }, SECRET, {
-      expiresIn: "1h",
-    });
+    res.json({ user: result.rows[0] });
 
-    res.json({ token, user });
   } catch (err) {
     console.error("❌ Register error:", err);
-    res.status(500).json({ error: "Registration error" });
+    res.status(500).json({ error: "Registration failed" });
   }
 });
 
-// Login
+// =======================
+//  Login Route + Save Login Time
+// =======================
 app.post("/api/login", async (req, res) => {
   const { email, password } = req.body;
-  if (!email || !password)
-    return res.status(400).json({ error: "Email and password required" });
 
   try {
-    const result = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
+    const result = await pool.query(
+      "SELECT * FROM users WHERE email=$1", 
+      [email]
+    );
+
     if (result.rows.length === 0)
       return res.status(401).json({ error: "User not found" });
 
     const user = result.rows[0];
+
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(401).json({ error: "Incorrect password" });
 
-    const token = jwt.sign({ id: user.id, email: user.email }, SECRET, {
-      expiresIn: "1h",
-    });
-
-    res.json({ token, user });
-  } catch (err) {
-    console.error("❌ Login error:", err);
-    res.status(500).json({ error: "Login failed" });
-  }
-});
-
-// 🚀 GET ALL USERS (این روت گم شده بود!)
-app.get("/api/users", async (req, res) => {
-  try {
-    const result = await pool.query(
-      "SELECT id, name, email, gender FROM users ORDER BY id ASC"
-    );
-    res.json(result.rows);
-  } catch (err) {
-    console.error("❌ Users fetch error:", err);
-    res.status(500).json({ error: "Error fetching users" });
-  }
-});
-
-// Stats
-app.get("/api/stats", async (req, res) => {
-  try {
-    const result = await pool.query(
-      "SELECT id, name, email, gender FROM users ORDER BY id DESC"
-    );
-    const totalUsers = result.rows.length;
-    const latestUsers = result.rows.slice(0, 5);
-    res.json({ totalUsers, latestUsers });
-  } catch (err) {
-    console.error("❌ Stats error:", err);
-    res.status(500).send("Error fetching stats");
-  }
-});
-
-// Start server
-app.listen(port, () =>
-  console.log(`🚀 Backend running at http://localhost:${port}`)
-);
-
-// ✅ Login route
-app.post("/api/login", async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password)
-    return res.status(400).json({ error: "Email and password required" });
-
-  try {
-    const result = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
-    if (result.rows.length === 0)
-      return res.status(401).json({ error: "User not found" });
-
-    const user = result.rows[0];
-    const match = await bcrypt.compare(password, user.password);
-    if (!match) return res.status(401).json({ error: "Incorrect password" });
-
-    // 🟢 Update last login timestamp
-    const updateLogin = await pool.query(
-      "UPDATE users SET last_login = NOW() WHERE id = $1 RETURNING last_login",
+    // Store login time
+    await pool.query(
+      "INSERT INTO login_logs (user_id) VALUES ($1)",
       [user.id]
     );
 
-    const token = jwt.sign({ id: user.id, email: user.email }, SECRET, {
-      expiresIn: "1h",
-    });
+    // Get last login (before this one)
+    const lastLoginRes = await pool.query(
+      `SELECT login_time FROM login_logs 
+       WHERE user_id=$1 
+       ORDER BY id DESC 
+       LIMIT 1 OFFSET 1`,
+      [user.id]
+    );
+
+    const last_login = lastLoginRes.rows[0]?.login_time || null;
+
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role }, 
+      SECRET,
+      { expiresIn: "3h" }
+    );
 
     res.json({
       token,
@@ -167,11 +149,42 @@ app.post("/api/login", async (req, res) => {
         name: user.name,
         email: user.email,
         gender: user.gender,
-        last_login: updateLogin.rows[0].last_login,
-      },
+        role: user.role,
+        last_login,
+      }
     });
+
   } catch (err) {
     console.error("❌ Login error:", err);
     res.status(500).json({ error: "Login failed" });
   }
+});
+
+// =======================
+//  Users List + Last Login
+// =======================
+app.get("/api/users", async (req, res) => {
+  try {
+    const users = await pool.query(`
+      SELECT 
+        u.id, u.name, u.email, u.gender, u.role,
+        (SELECT login_time FROM login_logs 
+         WHERE user_id = u.id 
+         ORDER BY id DESC LIMIT 1) AS last_login
+      FROM users u
+      ORDER BY u.id ASC;
+    `);
+
+    res.json(users.rows);
+  } catch (err) {
+    console.error("❌ Users error:", err);
+    res.status(500).json({ error: "Failed to fetch users" });
+  }
+});
+
+// =======================
+// Start Server
+// =======================
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
 });
