@@ -4,14 +4,15 @@ export default function Users() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
+  const [expandedUser, setExpandedUser] = useState(null); // 🔥 نمایش تاریخچه ورود کاربر
+  const [loginLogs, setLoginLogs] = useState([]); // 🔥 ذخیره تاریخچه ورود
 
-  // 🔥 لینک واقعی Render
   const BACKEND_URL = "https://solarsmart-backend-new.onrender.com";
 
   useEffect(() => {
     const controller = new AbortController();
 
-    const load = async () => {
+    const loadUsers = async () => {
       try {
         setLoading(true);
         setErr("");
@@ -20,19 +21,18 @@ export default function Users() {
         const token = localStorage.getItem("token");
 
         if (!user || user.role !== "admin") {
-          setErr("Access denied: admin only 🚫");
+          setErr("❌ Access denied: admin only");
           setLoading(false);
           return;
         }
 
         if (!token) {
-          setErr("No token found! Login again.");
+          setErr("❌ No token found. Please login again.");
           setLoading(false);
           return;
         }
 
         const res = await fetch(`${BACKEND_URL}/api/users`, {
-          method: "GET",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
@@ -40,28 +40,47 @@ export default function Users() {
           signal: controller.signal,
         });
 
-        if (!res.ok) {
-          const text = await res.text();
-          throw new Error(text || res.statusText);
-        }
+        if (!res.ok) throw new Error(await res.text());
 
         const data = await res.json();
         setUsers(Array.isArray(data) ? data : []);
       } catch (e) {
-        if (e.name !== "AbortError") {
-          console.error("❌ Users load error:", e);
-          setErr(e.message || "Failed to load users");
-        }
+        console.error("❌ Users load error:", e);
+        if (e.name !== "AbortError") setErr(e.message);
       } finally {
         setLoading(false);
       }
     };
 
-    load();
+    loadUsers();
     return () => controller.abort();
   }, []);
 
-  // ---------------------------- UI ---------------------------- //
+  // ----------------------------------------------------
+  //     🔥 گرفتن تاریخچه ورود یک کاربر
+  // ----------------------------------------------------
+  const loadLoginLogs = async (userId) => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const res = await fetch(`${BACKEND_URL}/api/loginlogs/${userId}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+      setLoginLogs(data.logs || []);
+      setExpandedUser(userId);
+    } catch (e) {
+      console.error("❌ Load login logs error:", e);
+    }
+  };
+
+  // ----------------------------------------------------
+  //                     UI SECTION
+  // ----------------------------------------------------
 
   if (loading)
     return (
@@ -73,7 +92,7 @@ export default function Users() {
   if (err)
     return (
       <div className="max-w-4xl mx-auto p-6 bg-white rounded-xl shadow text-center text-red-600">
-        ❌ {err}
+        {err}
       </div>
     );
 
@@ -84,23 +103,8 @@ export default function Users() {
       </div>
     );
 
-  // ⏰ تبدیل زمان UTC به Europe/Bucharest
-  const formatDate = (dateString) => {
-    if (!dateString) return "-";
-
-    return new Date(dateString).toLocaleString("en-GB", {
-      timeZone: "Europe/Bucharest",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    });
-  };
-
   return (
-    <div className="max-w-6xl mx-auto p-6 bg-white rounded-xl shadow">
+    <div className="max-w-5xl mx-auto p-6 bg-white rounded-xl shadow">
       <h1 className="text-2xl font-bold text-green-700 mb-4 text-center">
         👥 Registered Users
       </h1>
@@ -113,23 +117,65 @@ export default function Users() {
               <th className="py-3 pr-4">Name</th>
               <th className="py-3 pr-4">Email</th>
               <th className="py-3 pr-4">Gender</th>
-              <th className="py-3 pr-4">Role</th>
-              <th className="py-3 pr-4">Last Login 🇷🇴</th>
+              <th className="py-3 pr-4">Last Login</th>
+              <th className="py-3 pr-4">Logins</th>
             </tr>
           </thead>
 
           <tbody>
             {users.map((u, i) => (
-              <tr key={u.id} className="border-b hover:bg-green-50">
-                <td className="py-2 pr-4">{i + 1}</td>
-                <td className="py-2 pr-4">{u.name}</td>
-                <td className="py-2 pr-4">{u.email}</td>
-                <td className="py-2 pr-4 capitalize">{u.gender}</td>
-                <td className="py-2 pr-4">{u.role || "user"}</td>
+              <>
+                <tr key={u.id} className="border-b hover:bg-green-50">
+                  <td className="py-2 pr-4">{i + 1}</td>
+                  <td className="py-2 pr-4">{u.name}</td>
+                  <td className="py-2 pr-4">{u.email}</td>
+                  <td className="py-2 pr-4 capitalize">{u.gender}</td>
 
-                {/* ⏰ نمایش زمان آخرین ورود به ساعت رومانی */}
-                <td className="py-2 pr-4">{formatDate(u.last_login)}</td>
-              </tr>
+                  {/* آخرین ورود */}
+                  <td className="py-2 pr-4">
+                    {u.last_login
+                      ? new Date(u.last_login).toLocaleString("ro-RO")
+                      : "—"}
+                  </td>
+
+                  {/* دکمه تاریخچه ورود */}
+                  <td className="py-2 pr-4">
+                    <button
+                      className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+                      onClick={() =>
+                        expandedUser === u.id
+                          ? setExpandedUser(null)
+                          : loadLoginLogs(u.id)
+                      }
+                    >
+                      {expandedUser === u.id ? "Hide" : "View"}
+                    </button>
+                  </td>
+                </tr>
+
+                {/* 🔥 تاریخچه ورود در همان صفحه */}
+                {expandedUser === u.id && (
+                  <tr className="bg-green-50">
+                    <td colSpan="6" className="p-4">
+                      <h3 className="font-bold text-green-700 mb-2">
+                        Login History:
+                      </h3>
+
+                      {loginLogs.length === 0 ? (
+                        <p>No login logs found.</p>
+                      ) : (
+                        <ul className="list-disc pl-6">
+                          {loginLogs.map((log, idx) => (
+                            <li key={idx}>
+                              {new Date(log.login_time).toLocaleString("ro-RO")}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </td>
+                  </tr>
+                )}
+              </>
             ))}
           </tbody>
         </table>
