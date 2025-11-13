@@ -134,3 +134,44 @@ app.get("/api/stats", async (req, res) => {
 app.listen(port, () =>
   console.log(`🚀 Backend running at http://localhost:${port}`)
 );
+
+// ✅ Login route
+app.post("/api/login", async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password)
+    return res.status(400).json({ error: "Email and password required" });
+
+  try {
+    const result = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
+    if (result.rows.length === 0)
+      return res.status(401).json({ error: "User not found" });
+
+    const user = result.rows[0];
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) return res.status(401).json({ error: "Incorrect password" });
+
+    // 🟢 Update last login timestamp
+    const updateLogin = await pool.query(
+      "UPDATE users SET last_login = NOW() WHERE id = $1 RETURNING last_login",
+      [user.id]
+    );
+
+    const token = jwt.sign({ id: user.id, email: user.email }, SECRET, {
+      expiresIn: "1h",
+    });
+
+    res.json({
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        gender: user.gender,
+        last_login: updateLogin.rows[0].last_login,
+      },
+    });
+  } catch (err) {
+    console.error("❌ Login error:", err);
+    res.status(500).json({ error: "Login failed" });
+  }
+});
