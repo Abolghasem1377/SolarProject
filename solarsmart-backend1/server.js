@@ -208,3 +208,46 @@ app.get("/api/users/:id/logs", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
+
+// =======================
+// WEEKLY LOGIN STATS
+// =======================
+app.get("/api/stats/weekly", async (req, res) => {
+  try {
+    const stats = await pool.query(`
+      SELECT 
+        DATE(login_time) AS day,
+        COUNT(*) AS count
+      FROM login_logs
+      WHERE login_time >= NOW() - INTERVAL '7 days'
+      GROUP BY day
+      ORDER BY day ASC
+    `);
+
+    res.json(stats.rows);
+  } catch (err) {
+    console.error("❌ Weekly stats error:", err);
+    res.status(500).json({ error: "Failed to load weekly stats" });
+  }
+});
+
+// =======================
+// MONTHLY LOGIN STATS
+// =======================
+app.get("/api/stats/monthly", async (req, res) => {
+  try {
+    const stats = await pool.query(`
+      SELECT 
+        TO_CHAR(login_time, 'YYYY-MM') AS month,
+        COUNT(*) AS count
+      FROM login_logs
+      GROUP BY month
+      ORDER BY month ASC
+    `);
+
+    res.json(stats.rows);
+  } catch (err) {
+    console.error("❌ Monthly stats error:", err);
+    res.status(500).json({ error: "Failed to load monthly stats" });
+  }
+});
