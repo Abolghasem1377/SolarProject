@@ -12,6 +12,51 @@ export default function Home() {
   });
   const [status, setStatus] = useState("idle");
 
+  // 📰 Energy News Auto Slider
+  const [newsIndex, setNewsIndex] = useState(0);
+
+  const newsData = [
+    {
+      title: "Global solar power hits record growth in 2025",
+      source: "Reuters",
+      url: "https://www.reuters.com/sustainability",
+      image: "/images/news1.jpg",
+    },
+    {
+      title: "EU announces new incentives for renewable energy projects",
+      source: "Euronews",
+      url: "https://www.euronews.com/green",
+      image: "/images/news2.jpg",
+    },
+    {
+      title: "Battery prices drop by 20% due to mass production",
+      source: "Bloomberg Energy",
+      url: "https://www.bloomberg.com/energy",
+      image: "/images/news3.jpg",
+    },
+    {
+      title: "Middle East expands solar mega-projects rapidly",
+      source: "Al Jazeera",
+      url: "https://www.aljazeera.com/economy",
+      image: "/images/news4.jpg",
+    },
+    {
+      title: "Romania approves new 2025 solar farm investments",
+      source: "Romania Insider",
+      url: "https://www.romania-insider.com",
+      image: "/images/news5.jpg",
+    },
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNewsIndex((prev) => (prev + 1) % newsData.length);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // 🕒 Time
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timer);
@@ -92,7 +137,7 @@ export default function Home() {
         backgroundAttachment: "fixed",
       }}
     >
-      {/* ⚡️ Background energy beams */}
+      {/* ⚡️ Light Beams */}
       <div className="absolute inset-0 overflow-hidden">
         {[...Array(6)].map((_, i) => (
           <motion.div
@@ -127,7 +172,7 @@ export default function Home() {
         <p className="text-xs sm:text-sm text-gray-800 mt-1">{formattedDate}</p>
       </motion.div>
 
-      {/* 🌍 Language buttons (moved to left) */}
+      {/* 🌍 Language buttons */}
       <div className="absolute top-4 left-4 sm:top-6 sm:left-8 flex space-x-1 sm:space-x-3 z-[50]">
         {["en", "fa", "ro"].map((code) => (
           <button
@@ -144,7 +189,7 @@ export default function Home() {
         ))}
       </div>
 
-      {/* 🌞 Hero Section */}
+      {/* 🌞 Hero */}
       <motion.div
         dir={lang === "fa" ? "rtl" : "ltr"}
         className={`relative z-10 text-center p-6 sm:p-10 bg-white/40 backdrop-blur-lg rounded-3xl shadow-2xl max-w-[90%] sm:max-w-3xl border border-white/40 mt-24 transition-all duration-500 ${
@@ -172,7 +217,55 @@ export default function Home() {
         </motion.button>
       </motion.div>
 
-      {/* 📬 Contact Section */}
+      {/* 📰 Energy News */}
+      <motion.div
+        className="relative z-20 mt-20 w-full max-w-4xl bg-white/70 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/40 p-6 sm:p-8"
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 1 }}
+      >
+        <h2 className="text-2xl sm:text-3xl font-bold text-green-700 mb-6 text-center">
+          🌍 آخرین اخبار انرژی
+        </h2>
+
+        <motion.div
+          key={newsIndex}
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -30 }}
+          transition={{ duration: 0.8 }}
+          className="cursor-pointer"
+          onClick={() => window.open(newsData[newsIndex].url, "_blank")}
+        >
+          <img
+            src={newsData[newsIndex].image}
+            alt="news"
+            className="w-full h-60 object-cover rounded-2xl shadow-md"
+          />
+
+          <h3 className="text-xl font-semibold mt-4 text-green-700">
+            {newsData[newsIndex].title}
+          </h3>
+
+          <p className="text-gray-600 text-sm mt-1">
+            منبع: {newsData[newsIndex].source}
+          </p>
+        </motion.div>
+
+        <div className="flex justify-center mt-4 space-x-2">
+          {newsData.map((_, i) => (
+            <div
+              key={i}
+              className={`w-3 h-3 rounded-full ${
+                i === newsIndex ? "bg-green-600" : "bg-gray-300"
+              }`}
+            ></div>
+          ))}
+        </div>
+      </motion.div>
+
+      {/* 📬 Contact */}
       <motion.div
         dir={lang === "fa" ? "rtl" : "ltr"}
         className="relative z-20 mt-16 sm:mt-24 mb-10 w-full max-w-lg sm:max-w-2xl bg-white/70 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/40 p-6 sm:p-8 text-center"
@@ -184,6 +277,7 @@ export default function Home() {
         <h2 className="text-2xl sm:text-3xl font-bold text-green-700 mb-6">
           {texts[lang].contactTitle}
         </h2>
+
         <form
           onSubmit={handleSubmit}
           className="flex flex-col space-y-4 text-left"
@@ -212,6 +306,7 @@ export default function Home() {
             onChange={handleChange}
             className="px-4 py-3 rounded-xl border border-green-300 focus:outline-none focus:ring-2 focus:ring-green-400 bg-white/90 transition-all duration-200 resize-none"
           />
+
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
