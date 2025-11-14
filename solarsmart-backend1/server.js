@@ -1,5 +1,5 @@
 // =======================
-//  SOLARSMART BACKEND - FULL
+//  SOLARSMART BACKEND - FINAL VERSION
 // =======================
 
 import express from "express";
@@ -14,15 +14,15 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-// =======================
-//  MIDDLEWARE
-// =======================
+// -----------------------
+// Middleware
+// -----------------------
 app.use(cors());
 app.use(express.json());
 
-// =======================
-//  PostgreSQL
-// =======================
+// -----------------------
+// PostgreSQL
+// -----------------------
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.SSL === "true" ? { rejectUnauthorized: false } : false,
@@ -35,11 +35,10 @@ pool
 
 const SECRET = "solar_secret_key";
 
-// =======================
-//  Ensure Tables Exist
-// =======================
+// -----------------------
+// Create Tables
+// -----------------------
 (async () => {
-  // جدول کاربران
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
       id SERIAL PRIMARY KEY,
@@ -51,7 +50,6 @@ const SECRET = "solar_secret_key";
     );
   `);
 
-  // جدول لاگین‌ها
   await pool.query(`
     CREATE TABLE IF NOT EXISTS login_logs (
       id SERIAL PRIMARY KEY,
@@ -62,42 +60,40 @@ const SECRET = "solar_secret_key";
     );
   `);
 
-  console.log("✅ All tables are ready");
+  console.log("✅ Tables ready");
 })();
 
-// =======================
-//  Test Route
-// =======================
+// -----------------------
+// Test Route
+// -----------------------
 app.get("/api/test", (req, res) => {
   res.json({ message: "Backend OK ✔" });
 });
 
-// =======================
-//  Register
-// =======================
+// -----------------------
+// Register
+// -----------------------
 app.post("/api/register", async (req, res) => {
   const { name, email, password, gender } = req.body;
 
-  if (!name || !email || !password || !gender) {
+  if (!name || !email || !password || !gender)
     return res.status(400).json({ error: "All fields required" });
-  }
 
   try {
     const exists = await pool.query(
-      "SELECT 1 FROM users WHERE email = $1",
+      "SELECT 1 FROM users WHERE email=$1",
       [email]
     );
 
-    if (exists.rows.length > 0) {
+    if (exists.rows.length > 0)
       return res.status(400).json({ error: "Email already registered" });
-    }
 
     const hashed = await bcrypt.hash(password, 10);
 
     const result = await pool.query(
-      `INSERT INTO users (name, email, password, gender)
-       VALUES ($1, $2, $3, $4)
-       RETURNING id, name, email, gender, role`,
+      `INSERT INTO users (name,email,password,gender)
+       VALUES ($1,$2,$3,$4)
+       RETURNING id,name,email,gender,role`,
       [name, email, hashed, gender]
     );
 
@@ -108,30 +104,27 @@ app.post("/api/register", async (req, res) => {
   }
 });
 
-// =======================
-//  Login  + Save login_logs
-// =======================
+// -----------------------
+// Login + Save login_logs
+// -----------------------
 app.post("/api/login", async (req, res) => {
   const { email, password } = req.body;
 
   try {
     const result = await pool.query(
-      "SELECT * FROM users WHERE email = $1",
+      "SELECT * FROM users WHERE email=$1",
       [email]
     );
 
-    if (result.rows.length === 0) {
+    if (result.rows.length === 0)
       return res.status(401).json({ error: "User not found" });
-    }
 
     const user = result.rows[0];
     const match = await bcrypt.compare(password, user.password);
 
-    if (!match) {
+    if (!match)
       return res.status(401).json({ error: "Incorrect password" });
-    }
 
-    // ذخیره لاگین جدید
     const ip =
       req.headers["x-forwarded-for"]?.split(",")[0] ||
       req.socket?.remoteAddress ||
@@ -140,16 +133,15 @@ app.post("/api/login", async (req, res) => {
     const ua = req.headers["user-agent"] || null;
 
     await pool.query(
-      "INSERT INTO login_logs (user_id, ip_address, user_agent) VALUES ($1, $2, $3)",
+      "INSERT INTO login_logs (user_id, ip_address, user_agent) VALUES ($1,$2,$3)",
       [user.id, ip, ua]
     );
 
-    // آخرین ورود "قبل از" این ورود
     const lastLoginRes = await pool.query(
       `SELECT login_time 
-       FROM login_logs 
-       WHERE user_id = $1 
-       ORDER BY id DESC 
+       FROM login_logs
+       WHERE user_id=$1
+       ORDER BY id DESC
        LIMIT 1 OFFSET 1`,
       [user.id]
     );
@@ -179,29 +171,22 @@ app.post("/api/login", async (req, res) => {
   }
 });
 
-// =======================
-//  Users List + Last Login
-// =======================
+// -----------------------
+// Get Users
+// -----------------------
 app.get("/api/users", async (req, res) => {
   try {
     const users = await pool.query(`
       SELECT 
-        u.id,
-        u.name,
-        u.email,
-        u.gender,
-        u.role,
+        u.id, u.name, u.email, u.gender, u.role,
         (
-          SELECT login_time
-          FROM login_logs
-          WHERE user_id = u.id
-          ORDER BY id DESC
-          LIMIT 1
+          SELECT login_time FROM login_logs 
+          WHERE user_id=u.id 
+          ORDER BY id DESC LIMIT 1
         ) AS last_login,
         (
-          SELECT COUNT(*)
-          FROM login_logs
-          WHERE user_id = u.id
+          SELECT COUNT(*) FROM login_logs 
+          WHERE user_id=u.id
         ) AS total_logins
       FROM users u
       ORDER BY u.id ASC;
@@ -214,76 +199,74 @@ app.get("/api/users", async (req, res) => {
   }
 });
 
-// =======================
-//  Login History For One User
-// =======================
+// -----------------------
+// Login history
+// -----------------------
 app.get("/api/users/:id/logs", async (req, res) => {
   const { id } = req.params;
 
   try {
     const logs = await pool.query(
-      `SELECT l.login_time, u.name, u.role
-       FROM login_logs l
-       JOIN users u ON u.id = l.user_id
-       WHERE l.user_id = $1
-       ORDER BY l.login_time DESC`,
+      `SELECT login_time FROM login_logs 
+       WHERE user_id=$1 
+       ORDER BY login_time DESC`,
       [id]
     );
 
     res.json(logs.rows);
   } catch (err) {
-    console.error("❌ Fetch logs error:", err);
-    res.status(500).json({ error: "Failed to fetch login history" });
+    console.error("❌ Logs error:", err);
+    res.status(500).json({ error: "Failed to fetch logs" });
   }
 });
 
-// =======================
-//  Weekly Stats (last 7 days)
-// =======================
+// -----------------------
+// Weekly Stats (LAST 7 DAYS)
+// -----------------------
 app.get("/api/stats/weekly-logins", async (req, res) => {
   try {
-    const result = await pool.query(
+    const rows = await pool.query(
       `SELECT 
-         to_char(login_time::date, 'YYYY-MM-DD') AS day,
-         COUNT(*)::int AS count
+        to_char(login_time::date,'YYYY-MM-DD') AS day,
+        COUNT(*)::int AS count
        FROM login_logs
        WHERE login_time >= NOW() - INTERVAL '6 days'
        GROUP BY day
-       ORDER BY day ASC;`
+       ORDER BY day`
     );
 
-    res.json(result.rows);
+    res.json(rows.rows);
   } catch (err) {
     console.error("❌ Weekly stats error:", err);
-    res.status(500).json({ error: "Failed to fetch weekly stats" });
+    res.status(500).json({ error: "Failed to load weekly stats" });
   }
 });
 
-// =======================
-//  Monthly Stats (last 6 months)
-// =======================
+// -----------------------
+// Monthly Stats (LAST 6 MONTHS)
+// -----------------------
 app.get("/api/stats/monthly-logins", async (req, res) => {
   try {
-    const result = await pool.query(
+    const rows = await pool.query(
       `SELECT 
-         to_char(date_trunc('month', login_time), 'YYYY-MM') AS month,
+         to_char(date_trunc('month',login_time),'YYYY-MM') AS month,
          COUNT(*)::int AS count
        FROM login_logs
        WHERE login_time >= NOW() - INTERVAL '5 months'
        GROUP BY month
-       ORDER BY month ASC;`
+       ORDER BY month`
     );
 
-    res.json(result.rows);
+    res.json(rows.rows);
   } catch (err) {
     console.error("❌ Monthly stats error:", err);
-    res.status(500).json({ error: "Failed to fetch monthly stats" });
+    res.status(500).json({ error: "Failed to load monthly stats" });
   }
 });
 
-// =======================
-//  Start Server
-// =======================
+// -----------------------
+// Start Server
+// -----------------------
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
