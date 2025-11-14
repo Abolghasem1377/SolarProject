@@ -15,44 +15,46 @@ export default function Home() {
   // 📰 Energy News Auto Slider
   const [newsIndex, setNewsIndex] = useState(0);
 
+  // ⭐ تصاویر کاملاً واقعی از سایت اصلی + Proxy بدون CORS
   const newsData = [
     {
       title: "Global solar power hits record growth in 2025",
       source: "Reuters",
       url: "https://www.reuters.com/business/sustainable-business/",
       image:
-        "https://www.reuters.com/pf/resources/images/reuters-default.png?d=123",
+        "https://api.allorigins.win/raw?url=https://www.reuters.com/pf/resources/images/reuters-default.png",
     },
     {
       title: "EU announces new incentives for renewable energy projects",
       source: "Euronews",
       url: "https://www.euronews.com/green",
       image:
-        "https://static.euronews.com/articles/stories/08/62/64/58/1440x810_cmsv2_5ee7e068-2b8e-5e52-a0d5-5521bdc90a3d-8626458.jpg",
+        "https://api.allorigins.win/raw?url=https://static.euronews.com/articles/stories/08/62/64/58/1440x810_cmsv2_5ee7e068-2b8e-5e52-a0d5-5521bdc90a3d-8626458.jpg",
     },
     {
       title: "Battery prices drop by 20% due to mass production",
       source: "Bloomberg",
       url: "https://www.bloomberg.com/energy",
       image:
-        "https://assets.bwbx.io/images/users/iqjWHBFdfxIU/iV3cLOb8t5xo/v1/1200x800.jpg",
+        "https://api.allorigins.win/raw?url=https://assets.bwbx.io/images/users/iqjWHBFdfxIU/iV3cLOb8t5xo/v1/1200x800.jpg",
     },
     {
       title: "Middle East expands solar mega-projects rapidly",
       source: "Al Jazeera",
       url: "https://www.aljazeera.com/economy",
       image:
-        "https://www.aljazeera.com/wp-content/uploads/2023/09/000_33TZ6V7.jpg?resize=770%2C513&quality=80",
+        "https://api.allorigins.win/raw?url=https://www.aljazeera.com/wp-content/uploads/2023/09/000_33TZ6V7.jpg?resize=770%2C513&quality=80",
     },
     {
       title: "Romania approves major solar farm investments",
       source: "Romania Insider",
       url: "https://www.romania-insider.com",
       image:
-        "https://www.romania-insider.com/sites/default/files/styles/article_main_image/public/2023-06/solar-panels-green-energy-dreamstime.jpg?itok=Ytd1Z4qV",
+        "https://api.allorigins.win/raw?url=https://www.romania-insider.com/sites/default/files/styles/article_main_image/public/2023-06/solar-panels-green-energy-dreamstime.jpg",
     },
   ];
 
+  // Auto Switch News Every 5 Seconds
   useEffect(() => {
     const interval = setInterval(() => {
       setNewsIndex((prev) => (prev + 1) % newsData.length);
@@ -79,7 +81,7 @@ export default function Home() {
     day: "numeric",
   });
 
-  // Translations
+  // 🌍 Text translations
   const texts = {
     en: {
       title: "Welcome to SolarSmart ⚡️",
@@ -128,6 +130,7 @@ export default function Home() {
     },
   };
 
+  // Contact Form Handlers
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -149,16 +152,15 @@ export default function Home() {
         backgroundAttachment: "fixed",
       }}
     >
-      {/* ⚡ Background Beams */}
+      {/* ⚡ Energy Beams Background */}
       <div className="absolute inset-0 overflow-hidden">
         {[...Array(6)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute h-[2px] w-[400px] bg-gradient-to-r from-yellow-300 via-orange-400 to-transparent opacity-70 rounded-full"
+            className="absolute h-[2px] w-[400px] bg-gradient-to-r from-yellow-300 via-orange-400 to-transparent opacity-70"
             style={{
               top: `${20 + i * 15}%`,
               left: "-400px",
-              filter: "drop-shadow(0 0 6px rgba(255,200,0,0.8))",
             }}
             animate={{ x: ["-400px", "120%"] }}
             transition={{
@@ -171,9 +173,9 @@ export default function Home() {
         ))}
       </div>
 
-      {/* Time */}
+      {/* 🕒 Time */}
       <motion.div
-        className="absolute top-4 right-4 sm:right-8 z-20 bg-white/70 backdrop-blur-md px-4 py-2 sm:px-6 sm:py-3 rounded-xl shadow-lg border border-white/40 text-center"
+        className="absolute top-4 right-4 sm:right-8 z-20 bg-white/70 backdrop-blur-md px-4 py-2 rounded-xl shadow-lg border text-center"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1 }}
@@ -181,19 +183,19 @@ export default function Home() {
         <p className="text-xl sm:text-2xl font-bold text-green-700">
           {formattedTime}
         </p>
-        <p className="text-xs sm:text-sm text-gray-800 mt-1">{formattedDate}</p>
+        <p className="text-xs sm:text-sm text-gray-800">{formattedDate}</p>
       </motion.div>
 
-      {/* Language Buttons */}
-      <div className="absolute top-4 left-4 sm:top-6 sm:left-8 flex space-x-1 sm:space-x-3 z-[50]">
+      {/* 🌍 Language buttons */}
+      <div className="absolute top-4 left-4 flex space-x-2 z-[50]">
         {["en", "fa", "ro"].map((code) => (
           <button
             key={code}
             onClick={() => setLang(code)}
-            className={`px-2 sm:px-3 py-[2px] sm:py-1 rounded-md text-xs sm:text-sm font-semibold transition-all duration-300 ${
+            className={`px-3 py-1 rounded-md text-sm font-semibold ${
               lang === code
-                ? "bg-green-600 text-white shadow-md scale-105"
-                : "bg-white/80 text-green-700 hover:bg-green-100"
+                ? "bg-green-600 text-white"
+                : "bg-white/80 text-green-700"
             }`}
           >
             {code.toUpperCase()}
@@ -201,44 +203,36 @@ export default function Home() {
         ))}
       </div>
 
-      {/* Hero Section */}
+      {/* 🌞 Hero Section */}
       <motion.div
         dir={lang === "fa" ? "rtl" : "ltr"}
-        className={`relative z-10 text-center p-6 sm:p-10 bg-white/40 backdrop-blur-lg rounded-3xl shadow-2xl max-w-[90%] sm:max-w-3xl border border-white/40 mt-24 ${
+        className={`relative z-10 text-center p-10 bg-white/40 backdrop-blur-lg rounded-3xl shadow-2xl max-w-3xl border ${
           lang === "fa" ? "font-[Vazirmatn]" : ""
         }`}
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1.2 }}
       >
-        <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold text-green-700 mb-4 sm:mb-6">
+        <h1 className="text-5xl font-bold text-green-700 mb-4">
           {texts[lang].title}
         </h1>
-        <p className="text-gray-700 text-base sm:text-lg md:text-xl mb-6 sm:mb-8 leading-relaxed">
-          {texts[lang].description}
-        </p>
+        <p className="text-gray-700 text-xl mb-6">{texts[lang].description}</p>
+
         <motion.button
-          whileHover={{
-            scale: 1.1,
-            boxShadow: "0 0 40px rgba(16,185,129,0.6)",
-          }}
-          whileTap={{ scale: 0.95 }}
-          className="px-8 sm:px-10 py-3 sm:py-4 text-base sm:text-lg font-semibold text-white bg-gradient-to-r from-green-500 to-emerald-600 rounded-full shadow-lg hover:shadow-2xl"
+          whileHover={{ scale: 1.1 }}
+          className="px-10 py-4 text-lg font-semibold text-white bg-gradient-to-r from-green-500 to-emerald-600 rounded-full shadow-lg"
         >
           {texts[lang].button}
         </motion.button>
       </motion.div>
 
-      {/* 📰 Energy News */}
+      {/* 📰 ENERGY NEWS SECTION */}
       <motion.div
         dir={lang === "fa" ? "rtl" : "ltr"}
-        className="relative z-20 mt-20 w-full max-w-4xl bg-white/70 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/40 p-6 sm:p-8"
+        className="relative z-20 mt-20 w-full max-w-4xl bg-white/70 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border"
         initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 1 }}
+        animate={{ opacity: 1, y: 0 }}
       >
-        <h2 className="text-2xl sm:text-3xl font-bold text-green-700 mb-6 text-center">
+        <h2 className="text-3xl font-bold text-green-700 text-center mb-6">
           {texts[lang].newsTitle}
         </h2>
 
@@ -246,17 +240,16 @@ export default function Home() {
           key={newsIndex}
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="cursor-pointer"
           onClick={() => window.open(newsData[newsIndex].url, "_blank")}
+          className="cursor-pointer"
         >
           <img
             src={newsData[newsIndex].image}
             alt="news"
-            className="w-full h-60 object-cover rounded-2xl shadow-md"
+            className="w-full h-64 object-cover rounded-2xl shadow-lg"
           />
 
-          <h3 className="text-xl font-semibold mt-4 text-green-700">
+          <h3 className="text-2xl font-semibold text-green-700 mt-4">
             {newsData[newsIndex].title}
           </h3>
 
@@ -265,6 +258,7 @@ export default function Home() {
           </p>
         </motion.div>
 
+        {/* Dots */}
         <div className="flex justify-center mt-4 space-x-2">
           {newsData.map((_, i) => (
             <div
@@ -277,30 +271,23 @@ export default function Home() {
         </div>
       </motion.div>
 
-      {/* Contact Section */}
+      {/* CONTACT */}
       <motion.div
         dir={lang === "fa" ? "rtl" : "ltr"}
-        className="relative z-20 mt-16 sm:mt-24 mb-10 w-full max-w-lg sm:max-w-2xl bg-white/70 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/40 p-6 sm:p-8 text-center"
-        initial={{ opacity: 0, y: 60 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 1 }}
+        className="mt-20 w-full max-w-2xl bg-white/70 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border"
       >
-        <h2 className="text-2xl sm:text-3xl font-bold text-green-700 mb-6">
+        <h2 className="text-3xl font-bold text-green-700 mb-6 text-center">
           {texts[lang].contactTitle}
         </h2>
 
-        <form
-          onSubmit={handleSubmit}
-          className="flex flex-col space-y-4 text-left"
-        >
+        <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
           <input
             type="text"
             name="name"
             placeholder={texts[lang].name}
             value={formData.name}
             onChange={handleChange}
-            className="px-4 py-3 rounded-xl border border-green-300 focus:outline-none focus:ring-2 focus:ring-green-400 bg-white/90"
+            className="px-4 py-3 rounded-xl border"
           />
           <input
             type="email"
@@ -308,7 +295,7 @@ export default function Home() {
             placeholder={texts[lang].email}
             value={formData.email}
             onChange={handleChange}
-            className="px-4 py-3 rounded-xl border border-green-300 focus:outline-none focus:ring-2 focus:ring-green-400 bg-white/90"
+            className="px-4 py-3 rounded-xl border"
           />
           <textarea
             rows="4"
@@ -316,19 +303,18 @@ export default function Home() {
             placeholder={texts[lang].message}
             value={formData.message}
             onChange={handleChange}
-            className="px-4 py-3 rounded-xl border border-green-300 focus:outline-none focus:ring-2 focus:ring-green-400 bg-white/90 resize-none"
+            className="px-4 py-3 rounded-xl border"
           />
 
           <motion.button
             whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
             disabled={status === "sending"}
-            className={`w-full mt-3 py-3 text-base sm:text-lg font-semibold rounded-xl shadow-lg transition-all duration-300 ${
-              status === "sending"
-                ? "bg-yellow-400 text-white"
-                : "bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:shadow-2xl"
-            }`}
             type="submit"
+            className={`py-3 rounded-xl text-white text-xl font-semibold ${
+              status === "sending"
+                ? "bg-yellow-400"
+                : "bg-gradient-to-r from-green-500 to-emerald-600"
+            }`}
           >
             {status === "sending"
               ? texts[lang].sending
@@ -339,19 +325,14 @@ export default function Home() {
         </form>
       </motion.div>
 
-      {/* Social Icons */}
-      <motion.div
-        className="flex space-x-6 mb-12 z-20"
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1 }}
-      >
+      {/* SOCIAL */}
+      <motion.div className="flex space-x-6 mt-10 mb-20">
         {[FaLinkedin, FaInstagram, FaEnvelope].map((Icon, i) => (
           <motion.a
             key={i}
             href="#"
             whileHover={{ scale: 1.3 }}
-            className="text-2xl sm:text-3xl text-green-700 hover:text-green-600 transition-colors"
+            className="text-3xl text-green-700"
           >
             <Icon />
           </motion.a>
