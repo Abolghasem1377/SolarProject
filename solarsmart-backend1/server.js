@@ -1,6 +1,5 @@
 // =======================
-//  SOLARSMART BACKEND
-//  Login Tracking Enabled
+//  SOLARSMART BACKEND - COMPLETE VERSION
 // =======================
 
 import express from "express";
@@ -26,7 +25,8 @@ const pool = new pg.Pool({
   ssl: process.env.SSL === "true" ? { rejectUnauthorized: false } : false,
 });
 
-pool.connect()
+pool
+  .connect()
   .then(() => console.log("✅ Connected to PostgreSQL"))
   .catch((err) => console.error("❌ Database connection error:", err));
 
@@ -76,7 +76,7 @@ app.post("/api/register", async (req, res) => {
 
   try {
     const exists = await pool.query(
-      "SELECT * FROM users WHERE email=$1", 
+      "SELECT * FROM users WHERE email=$1",
       [email]
     );
 
@@ -92,7 +92,6 @@ app.post("/api/register", async (req, res) => {
     );
 
     res.json({ user: result.rows[0] });
-
   } catch (err) {
     console.error("❌ Register error:", err);
     res.status(500).json({ error: "Registration failed" });
@@ -107,7 +106,7 @@ app.post("/api/login", async (req, res) => {
 
   try {
     const result = await pool.query(
-      "SELECT * FROM users WHERE email=$1", 
+      "SELECT * FROM users WHERE email=$1",
       [email]
     );
 
@@ -125,7 +124,7 @@ app.post("/api/login", async (req, res) => {
       [user.id]
     );
 
-    // Get last login (before this one)
+    // Get last login (NOT including this one)
     const lastLoginRes = await pool.query(
       `SELECT login_time FROM login_logs 
        WHERE user_id=$1 
@@ -137,7 +136,7 @@ app.post("/api/login", async (req, res) => {
     const last_login = lastLoginRes.rows[0]?.login_time || null;
 
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role }, 
+      { id: user.id, email: user.email, role: user.role },
       SECRET,
       { expiresIn: "3h" }
     );
@@ -151,9 +150,8 @@ app.post("/api/login", async (req, res) => {
         gender: user.gender,
         role: user.role,
         last_login,
-      }
+      },
     });
-
   } catch (err) {
     console.error("❌ Login error:", err);
     res.status(500).json({ error: "Login failed" });
@@ -179,6 +177,28 @@ app.get("/api/users", async (req, res) => {
   } catch (err) {
     console.error("❌ Users error:", err);
     res.status(500).json({ error: "Failed to fetch users" });
+  }
+});
+
+// =======================
+//  ⬇️ NEW: Login History for Each User
+// =======================
+app.get("/api/users/:id/logs", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const logs = await pool.query(
+      `SELECT login_time 
+       FROM login_logs 
+       WHERE user_id = $1 
+       ORDER BY login_time DESC`,
+      [id]
+    );
+
+    res.json(logs.rows);
+  } catch (err) {
+    console.error("❌ Fetch logs error:", err);
+    res.status(500).json({ error: "Failed to fetch login history" });
   }
 });
 
