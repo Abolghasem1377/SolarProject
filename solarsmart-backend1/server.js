@@ -1,5 +1,5 @@
 // =======================
-//  SOLARSMART BACKEND - COMPLETE VERSION
+//  SOLARSMART BACKEND - FINAL
 // =======================
 
 import express from "express";
@@ -18,7 +18,7 @@ app.use(cors());
 app.use(express.json());
 
 // =======================
-//  PostgreSQL
+// PostgreSQL
 // =======================
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
@@ -33,7 +33,7 @@ pool
 const SECRET = "solar_secret_key";
 
 // =======================
-//  Ensure Tables Exist
+// Ensure Tables Exist
 // =======================
 (async () => {
   await pool.query(`
@@ -51,7 +51,9 @@ const SECRET = "solar_secret_key";
     CREATE TABLE IF NOT EXISTS login_logs (
       id SERIAL PRIMARY KEY,
       user_id INTEGER REFERENCES users(id),
-      login_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      login_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      ip_address VARCHAR(50),
+      user_agent TEXT
     );
   `);
 
@@ -59,14 +61,7 @@ const SECRET = "solar_secret_key";
 })();
 
 // =======================
-//  Test Route
-// =======================
-app.get("/api/test", (req, res) => {
-  res.json({ message: "Backend OK ✔" });
-});
-
-// =======================
-//  Register Route
+// Registration
 // =======================
 app.post("/api/register", async (req, res) => {
   const { name, email, password, gender } = req.body;
@@ -76,7 +71,7 @@ app.post("/api/register", async (req, res) => {
 
   try {
     const exists = await pool.query(
-      "SELECT * FROM users WHERE email=$1",
+      "SELECT 1 FROM users WHERE email = $1",
       [email]
     );
 
@@ -86,8 +81,9 @@ app.post("/api/register", async (req, res) => {
     const hashed = await bcrypt.hash(password, 10);
 
     const result = await pool.query(
-      `INSERT INTO users (name, email, password, gender) 
-       VALUES ($1,$2,$3,$4) RETURNING id,name,email,gender,role`,
+      `INSERT INTO users (name, email, password, gender)
+       VALUES ($1,$2,$3,$4)
+       RETURNING id,name,email,gender,role`,
       [name, email, hashed, gender]
     );
 
@@ -99,7 +95,7 @@ app.post("/api/register", async (req, res) => {
 });
 
 // =======================
-//  Login Route + Save Login Time
+// Login + Save Login Logs
 // =======================
 app.post("/api/login", async (req, res) => {
   const { email, password } = req.body;
@@ -114,21 +110,28 @@ app.post("/api/login", async (req, res) => {
       return res.status(401).json({ error: "User not found" });
 
     const user = result.rows[0];
-
     const match = await bcrypt.compare(password, user.password);
-    if (!match) return res.status(401).json({ error: "Incorrect password" });
 
-    // Store login time
+    if (!match)
+      return res.status(401).json({ error: "Incorrect password" });
+
+    const ip =
+      req.headers["x-forwarded-for"]?.split(",")[0] ||
+      req.socket?.remoteAddress ||
+      null;
+
+    const ua = req.headers["user-agent"] || null;
+
     await pool.query(
-      "INSERT INTO login_logs (user_id) VALUES ($1)",
-      [user.id]
+      "INSERT INTO login_logs (user_id, ip_address, user_agent) VALUES ($1,$2,$3)",
+      [user.id, ip, ua]
     );
 
-    // Get last login (NOT including this one)
     const lastLoginRes = await pool.query(
-      `SELECT login_time FROM login_logs 
-       WHERE user_id=$1 
-       ORDER BY id DESC 
+      `SELECT login_time
+       FROM login_logs
+       WHERE user_id=$1
+       ORDER BY id DESC
        LIMIT 1 OFFSET 1`,
       [user.id]
     );
@@ -159,18 +162,17 @@ app.post("/api/login", async (req, res) => {
 });
 
 // =======================
-//  Users List + Last Login
+// Users List
 // =======================
 app.get("/api/users", async (req, res) => {
   try {
     const users = await pool.query(`
       SELECT 
         u.id, u.name, u.email, u.gender, u.role,
-        (SELECT login_time FROM login_logs 
-         WHERE user_id = u.id 
-         ORDER BY id DESC LIMIT 1) AS last_login
+        (SELECT login_time FROM login_logs WHERE user_id=u.id ORDER BY id DESC LIMIT 1)
+        AS last_login
       FROM users u
-      ORDER BY u.id ASC;
+      ORDER BY u.id ASC
     `);
 
     res.json(users.rows);
@@ -181,30 +183,71 @@ app.get("/api/users", async (req, res) => {
 });
 
 // =======================
-//  ⬇️ NEW: Login History for Each User
+// Login History
 // =======================
 app.get("/api/users/:id/logs", async (req, res) => {
   const { id } = req.params;
 
   try {
     const logs = await pool.query(
-      `SELECT login_time 
-       FROM login_logs 
-       WHERE user_id = $1 
+      `SELECT login_time
+       FROM login_logs
+       WHERE user_id=$1
        ORDER BY login_time DESC`,
       [id]
     );
 
     res.json(logs.rows);
   } catch (err) {
-    console.error("❌ Fetch logs error:", err);
-    res.status(500).json({ error: "Failed to fetch login history" });
+    console.error("❌ Logs error:", err);
+    res.status(500).json({ error: "Failed to fetch logs" });
   }
 });
 
 // =======================
-// Start Server
+// WEEKLY LOGIN STATS
 // =======================
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+app.get("/api/stats/weekly", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        to_char(login_time::date,'YYYY-MM-DD') AS day,
+        COUNT(*)::int AS count
+      FROM login_logs
+      WHERE login_time >= NOW() - INTERVAL '6 days'
+      GROUP BY day
+      ORDER BY day ASC
+    `);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error("❌ Weekly stats error:", err);
+    res.status(500).json({ error: "Failed to fetch weekly stats" });
+  }
 });
+
+// =======================
+// MONTHLY LOGIN STATS
+// =======================
+app.get("/api/stats/monthly", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        to_char(date_trunc('month', login_time),'YYYY-MM') AS month,
+        COUNT(*)::int AS count
+      FROM login_logs
+      WHERE login_time >= NOW() - INTERVAL '5 months'
+      GROUP BY month
+      ORDER BY month ASC
+    `);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error("❌ Monthly stats error:", err);
+    res.status(500).json({ error: "Failed to fetch monthly stats" });
+  }
+});
+
+app.listen(PORT, () =>
+  console.log(`🚀 Server running on port ${PORT}`)
+);
