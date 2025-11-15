@@ -9,7 +9,7 @@ import {
   FaComments,
 } from "react-icons/fa";
 
-/* ----------------- DATA: Community + News ------------------ */
+/* ---------------- DATA ---------------- */
 
 const INITIAL_QUESTIONS = [
   {
@@ -92,6 +92,7 @@ export default function Home() {
   const [time, setTime] = useState(new Date());
   const [lang, setLang] = useState("en");
   const [activeTab, setActiveTab] = useState("news");
+  const [logoOpen, setLogoOpen] = useState(false);
 
   const sliderRef = useRef(null);
   const autoSlide = useRef(true);
@@ -132,19 +133,20 @@ export default function Home() {
       if (!autoSlide.current || activeTab !== "news") return;
       const el = sliderRef.current;
       if (!el) return;
+
       el.scrollLeft += 340;
-      if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 5)
+      if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 5) {
         el.scrollLeft = 0;
+      }
     }, 3500);
+
     return () => clearInterval(interval);
   }, [activeTab]);
 
   /* VOTE */
   const handleVote = (id, delta) => {
     setQuestions((prev) =>
-      prev.map((q) =>
-        q.id === id ? { ...q, votes: q.votes + delta } : q
-      )
+      prev.map((q) => (q.id === id ? { ...q, votes: q.votes + delta } : q))
     );
   };
 
@@ -152,6 +154,7 @@ export default function Home() {
   const handleQuestionSubmit = (e) => {
     e.preventDefault();
     if (!form.title.trim()) return;
+
     setQuestions((prev) => [
       {
         id: Date.now(),
@@ -162,6 +165,7 @@ export default function Home() {
       },
       ...prev,
     ]);
+
     setForm({ title: "", body: "", tag: "" });
   };
 
@@ -174,160 +178,189 @@ export default function Home() {
       className="min-h-screen flex flex-col items-center bg-cover bg-center font-[Poppins]"
       style={{ backgroundImage: "url('/images/solar-bg.jpg')" }}
     >
-      {/* CLOCK */}
-      <div className="absolute top-4 right-4 bg-white/80 px-4 py-2 rounded-xl shadow-md text-center">
-        <p className="text-lg font-bold text-green-700">
-          {time.toLocaleTimeString()}
-        </p>
-        <p className="text-[10px] text-gray-600">
-          {time.toLocaleDateString()}
-        </p>
-      </div>
-
-      {/* LANG */}
-      <div className="absolute top-4 left-4 flex gap-2">
-        {["en", "fa", "ro"].map((code) => (
-          <button
-            key={code}
-            onClick={() => setLang(code)}
-            className={`px-3 py-1 rounded-md text-xs sm:text-sm font-semibold ${
-              lang === code
-                ? "bg-green-600 text-white"
-                : "bg-white/90 text-green-700"
-            }`}
-          >
-            {code.toUpperCase()}
-          </button>
-        ))}
-      </div>
-
-      {/* HERO */}
-      <motion.div
-        dir={lang === "fa" ? "rtl" : "ltr"}
-        className="mt-24 bg-white/40 backdrop-blur-xl p-8 sm:p-10 rounded-3xl shadow-2xl max-w-3xl text-center border border-white/70"
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        <h1 className="text-3xl sm:text-5xl font-bold text-green-700 mb-4">
-          {t.heroTitle}
-        </h1>
-        <p className="text-gray-800 text-sm sm:text-lg mb-6">
-          {t.heroDesc}
-        </p>
-      </motion.div>
-
-      {/* DIVIDER */}
-      <motion.div
-        className="w-full max-w-4xl h-1 mt-10 mb-6 rounded-full bg-gradient-to-r from-emerald-400/70 via-yellow-300/80 to-emerald-500/70"
-        initial={{ scaleX: 0 }}
-        animate={{ scaleX: 1 }}
-      />
-
-      {/* TABS */}
-      <div className="flex items-center gap-2 sm:gap-4 bg-white/85 px-4 py-2 rounded-2xl shadow-md mb-6">
-        <TabButton
-          active={activeTab === "news"}
-          onClick={() => setActiveTab("news")}
-          icon={<FaRegNewspaper />}
-          text="News"
-        />
-        <TabButton
-          active={activeTab === "learning"}
-          onClick={() => setActiveTab("learning")}
-          icon={<FaBookOpen />}
-          text="Learning"
-        />
-        <TabButton
-          active={activeTab === "community"}
-          onClick={() => setActiveTab("community")}
-          icon={<FaComments />}
-          text="Community"
-        />
-      </div>
-
-      {/* CONTENT */}
-      {activeTab === "news" && (
-        <NewsTab sliderRef={sliderRef} autoSlide={autoSlide} />
+      {/* LOGO POPUP */}
+      {logoOpen && (
+        <div
+          className="fixed inset-0 bg-black/70 backdrop-blur-md flex flex-col items-center justify-center z-[999]"
+          onClick={() => setLogoOpen(false)}
+        >
+          <img
+            src="/images/logo.png"
+            alt="Large Logo"
+            className="w-56 sm:w-72 md:w-[420px] drop-shadow-2xl animate-pulse"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <p className="text-white/80 mt-4 text-xs sm:text-sm">
+            Tap anywhere to close
+          </p>
+        </div>
       )}
 
-      {activeTab === "learning" && <LearningTab />}
+      {/* MAIN CONTENT */}
+      <div className="w-full flex flex-col items-center">
 
-      {activeTab === "community" && (
-        <CommunityTab
-          form={form}
-          setForm={setForm}
-          handleQuestionSubmit={handleQuestionSubmit}
-          handleVote={handleVote}
-          questions={questions}
+        {/* TOP AREA: LANG + LOGO + CLOCK */}
+        <div className="w-full flex items-center justify-between px-6 py-4">
+          
+          {/* Languages */}
+          <div className="flex gap-2">
+            {["en", "fa", "ro"].map((code) => (
+              <button
+                key={code}
+                onClick={() => setLang(code)}
+                className={`px-3 py-1 rounded-md text-xs font-semibold ${
+                  lang === code
+                    ? "bg-green-600 text-white"
+                    : "bg-white/80 text-green-700"
+                }`}
+              >
+                {code.toUpperCase()}
+              </button>
+            ))}
+          </div>
+
+          {/* Logo */}
+          <img
+            src="/images/logo.png"
+            alt="Logo"
+            className="h-12 cursor-pointer hover:scale-110 transition-transform"
+            onClick={() => setLogoOpen(true)}
+          />
+
+          {/* Clock */}
+          <div className="text-right">
+            <p className="text-xs font-bold text-green-700">
+              {time.toLocaleTimeString()}
+            </p>
+            <p className="text-[10px] text-gray-600">
+              {time.toLocaleDateString()}
+            </p>
+          </div>
+        </div>
+
+        {/* HERO */}
+        <motion.div
+          dir={lang === "fa" ? "rtl" : "ltr"}
+          className="bg-white/40 backdrop-blur-xl p-8 sm:p-10 rounded-3xl shadow-2xl max-w-3xl text-center border border-white/70 mx-4"
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <h1 className="text-3xl sm:text-5xl font-bold text-green-700 mb-3">
+            {t.heroTitle}
+          </h1>
+          <p className="text-gray-800 text-sm sm:text-lg mb-6 leading-relaxed">
+            {t.heroDesc}
+          </p>
+        </motion.div>
+
+        {/* DIVIDER */}
+        <motion.div
+          className="w-full max-w-4xl h-1 mt-10 mb-6 rounded-full bg-gradient-to-r from-emerald-400/70 via-yellow-300/80 to-emerald-500/70"
+          initial={{ scaleX: 0 }}
+          animate={{ scaleX: 1 }}
         />
-      )}
 
-      {/* DIVIDER */}
-      <motion.div
-        className="w-full max-w-4xl h-px mb-6 rounded-full bg-gradient-to-r from-emerald-500/70 via-white/0 to-emerald-500/70"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-      />
+        {/* TABS */}
+        <div className="flex items-center gap-2 bg-white/85 px-4 py-2 rounded-2xl shadow-md mb-6 overflow-x-auto">
+          <TabButton
+            active={activeTab === "news"}
+            onClick={() => setActiveTab("news")}
+            icon={<FaRegNewspaper />}
+            text="News"
+          />
+          <TabButton
+            active={activeTab === "learning"}
+            onClick={() => setActiveTab("learning")}
+            icon={<FaBookOpen />}
+            text="Learning"
+          />
+          <TabButton
+            active={activeTab === "community"}
+            onClick={() => setActiveTab("community")}
+            icon={<FaComments />}
+            text="Community"
+          />
+        </div>
 
-      <ContactSection
-        lang={lang}
-        contact={contact}
-        setContact={setContact}
-        t={t}
-      />
+        {/* CONTENT TABS */}
+        {activeTab === "news" && (
+          <NewsTab sliderRef={sliderRef} autoSlide={autoSlide} />
+        )}
 
-      <Footer />
+        {activeTab === "learning" && <LearningTab />}
+
+        {activeTab === "community" && (
+          <CommunityTab
+            form={form}
+            setForm={setForm}
+            handleQuestionSubmit={handleQuestionSubmit}
+            handleVote={handleVote}
+            questions={questions}
+          />
+        )}
+
+        {/* Divider */}
+        <motion.div
+          className="w-full max-w-4xl h-px mb-6 rounded-full bg-gradient-to-r from-emerald-500/70 via-white/0 to-emerald-500/70"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        />
+
+        <ContactSection
+          lang={lang}
+          contact={contact}
+          setContact={setContact}
+          t={t}
+        />
+
+        <Footer />
+      </div>
     </div>
   );
 }
 
-/* ---------------- TAB BUTTON ---------------- */
-
+/* -------------- TAB BUTTON -------------- */
 function TabButton({ active, onClick, icon, text }) {
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold ${
+      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold ${
         active ? "bg-green-600 text-white" : "bg-gray-200 text-gray-700"
       }`}
     >
       {icon}
-      <span>{text}</span>
+      {text}
     </button>
   );
 }
 
-/* ---------------- NEWS TAB ---------------- */
-
+/* -------------- NEWS TAB -------------- */
 function NewsTab({ sliderRef, autoSlide }) {
   return (
     <div className="w-full max-w-6xl px-4 mb-16">
-      <h2 className="text-3xl font-bold text-green-700 mb-4">
+      <h2 className="text-2xl sm:text-3xl font-bold text-green-700 mb-4">
         Latest Energy News
       </h2>
 
       <div
-        className="relative"
         onMouseEnter={() => (autoSlide.current = false)}
         onMouseLeave={() => (autoSlide.current = true)}
       >
         <div
           ref={sliderRef}
-          className="flex gap-5 overflow-x-auto scroll-smooth pb-3"
+          className="flex gap-4 overflow-x-auto scroll-smooth pb-3 px-1"
           style={{ scrollbarWidth: "none" }}
         >
           {NEWS_DATA.map((n, i) => (
             <div
               key={i}
               onClick={() => window.open(n.url, "_blank")}
-              className="min-w-[300px] bg-white/90 rounded-2xl shadow-md border p-5 cursor-pointer hover:shadow-xl transition"
+              className="min-w-[280px] bg-white/95 rounded-2xl shadow-md border p-5 cursor-pointer hover:shadow-xl transition"
             >
-              <p className="text-xs text-gray-500 mb-1">
+              <p className="text-[11px] text-gray-500 mb-1">
                 Source: {n.source}
               </p>
-              <h3 className="font-semibold text-green-700 mb-2">
-                {n.title}
-              </h3>
+              <h3 className="font-semibold text-green-700 mb-2">{n.title}</h3>
               <p className="text-sm text-gray-700">{n.summary}</p>
             </div>
           ))}
@@ -337,81 +370,56 @@ function NewsTab({ sliderRef, autoSlide }) {
   );
 }
 
-/* ---------------- LEARNING TAB ---------------- */
-
+/* -------------- LEARNING TAB -------------- */
 function LearningTab() {
   return (
     <div className="w-full max-w-5xl px-4 mb-16">
-      <h2 className="text-3xl font-bold text-green-700 mb-6 text-center">
+      <h2 className="text-2xl sm:text-3xl font-bold text-green-700 mb-6 text-center">
         Solar Energy — Complete Beginner Guide ☀️
       </h2>
 
-      <div className="bg-white/95 rounded-2xl shadow-md border p-6 text-gray-800 leading-relaxed text-sm sm:text-base">
-
+      <div className="bg-white/95 rounded-2xl shadow-md border p-6 text-gray-800 leading-relaxed">
         <h3 className="text-xl font-bold text-green-700 mb-3">
           What is Solar Energy?
         </h3>
         <p className="mb-4">
-          Solar energy is the cleanest and most abundant renewable energy source.
-          It is produced when sunlight is converted into usable electricity or heat.
+          Solar energy is the cleanest and most abundant renewable energy
+          source. It is produced when sunlight is converted into usable
+          electricity or heat.
         </p>
 
         <h3 className="text-xl font-bold text-green-700 mb-3">
           How Solar Panels Work
         </h3>
-        <p className="mb-3">
-          Solar panels contain photovoltaic (PV) cells. When sunlight hits them,
-          electrons move and create direct current (DC) electricity.
-        </p>
-
         <ul className="list-disc pl-6 mb-4">
           <li>Sunlight hits the PV cells</li>
-          <li>Electrons move → electricity is produced</li>
-          <li>Panels generate DC electricity</li>
-          <li>An inverter converts DC to AC</li>
+          <li>Electrons move → electricity is produced (DC)</li>
+          <li>Inverter converts DC to AC</li>
+          <li>Solar energy is delivered into your home</li>
         </ul>
 
         <h3 className="text-xl font-bold text-green-700 mb-3">
           Types of Solar Systems
         </h3>
-
         <ul className="list-disc pl-6 mb-4">
-          <li>
-            <strong>On-grid:</strong> no batteries, cheapest option
-          </li>
-          <li>
-            <strong>Off-grid:</strong> independent, uses batteries
-          </li>
-          <li>
-            <strong>Hybrid:</strong> combines both, most flexible
-          </li>
+          <li>On-grid (no batteries, cheapest)</li>
+          <li>Off-grid (batteries required)</li>
+          <li>Hybrid (best of both worlds)</li>
         </ul>
 
         <h3 className="text-xl font-bold text-green-700 mb-3">
           Why Solar Energy Matters
         </h3>
-        <p className="mb-4">
-          Solar energy reduces bills, increases independence, and has almost no
+        <p>
+          Solar energy reduces bills, increases independence, and has low
           environmental impact.
         </p>
-
-        <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-xl text-emerald-700 text-sm">
-          <strong>Quick Summary:</strong>
-          <ul className="list-disc pl-6 mt-2 space-y-1">
-            <li>Solar turns sunlight into electricity.</li>
-            <li>Panels + inverter are the main components.</li>
-            <li>Hybrid systems are the most efficient today.</li>
-            <li>Solar is renewable, clean, and cost-effective.</li>
-          </ul>
-        </div>
-
       </div>
     </div>
   );
 }
 
-/* ---------------- COMMUNITY TAB ---------------- */
-
+/* -------------- COMMUNITY TAB -------------- */
 function CommunityTab({
   form,
   setForm,
@@ -421,76 +429,68 @@ function CommunityTab({
 }) {
   return (
     <div className="w-full max-w-6xl px-4 mb-16">
-      <h2 className="text-3xl font-bold text-green-700 mb-4">
+      <h2 className="text-2xl sm:text-3xl font-bold text-green-700 mb-4">
         SolarSmart Community 💬
       </h2>
 
-      {/* Ask form */}
       <div className="bg-white/95 rounded-2xl shadow-md p-5 mb-6">
-        <h3 className="text-base font-semibold text-green-700 mb-2">
-          Ask a new question
+        <h3 className="text-base font-semibold mb-2 text-green-700">
+          Ask a Question
         </h3>
-        <form onSubmit={handleQuestionSubmit} className="space-y-3">
+
+        <form className="space-y-3" onSubmit={handleQuestionSubmit}>
           <input
             className="w-full px-3 py-2 rounded-xl border"
             placeholder="Question title…"
             value={form.title}
-            onChange={(e) =>
-              setForm((f) => ({ ...f, title: e.target.value }))
-            }
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
           />
+
           <textarea
             className="w-full px-3 py-2 rounded-xl border"
             rows="3"
             placeholder="Describe your situation…"
             value={form.body}
-            onChange={(e) =>
-              setForm((f) => ({ ...f, body: e.target.value }))
-            }
+            onChange={(e) => setForm({ ...form, body: e.target.value })}
           />
+
           <input
             className="w-full px-3 py-2 rounded-xl border"
             placeholder="Tag (optional)"
             value={form.tag}
-            onChange={(e) =>
-              setForm((f) => ({ ...f, tag: e.target.value }))
-            }
+            onChange={(e) => setForm({ ...form, tag: e.target.value })}
           />
-          <button
-            type="submit"
-            className="px-5 py-2 rounded-xl bg-green-600 text-white font-semibold"
-          >
-            Post question
+
+          <button className="px-5 py-2 rounded-xl bg-green-600 text-white font-semibold">
+            Post
           </button>
         </form>
       </div>
 
-      {/* Questions */}
       <div className="space-y-3">
         {questions.map((q) => (
-          <div
-            key={q.id}
-            className="flex gap-3 bg-white/95 rounded-2xl border p-4"
-          >
-            <div className="flex flex-col items-center justify-center w-12">
+          <div key={q.id} className="flex bg-white/95 rounded-2xl p-4 shadow">
+            {/* Votes */}
+            <div className="flex flex-col items-center w-12">
               <button
+                className="w-8 h-8 flex items-center justify-center border rounded-full text-green-700"
                 onClick={() => handleVote(q.id, +1)}
-                className="w-8 h-8 flex items-center justify-center rounded-full border text-green-700"
               >
                 +
               </button>
-              <p className="text-sm font-semibold">{q.votes}</p>
+              <p className="font-semibold">{q.votes}</p>
               <button
+                className="w-8 h-8 flex items-center justify-center border rounded-full text-red-500"
                 onClick={() => handleVote(q.id, -1)}
-                className="w-8 h-8 flex items-center justify-center rounded-full border text-red-600"
               >
                 –
               </button>
             </div>
 
+            {/* Content */}
             <div className="flex-1">
               <h3 className="font-semibold text-green-700">{q.title}</h3>
-              <p className="text-sm text-gray-700">{q.body}</p>
+              <p>{q.body}</p>
               <span className="px-2 py-1 text-xs bg-emerald-50 border rounded-full">
                 {q.tag}
               </span>
@@ -502,19 +502,19 @@ function CommunityTab({
   );
 }
 
-/* ---------------- CONTACT SECTION ---------------- */
-
+/* -------------- CONTACT SECTION -------------- */
 function ContactSection({ lang, contact, setContact, t }) {
   return (
     <motion.div
       dir={lang === "fa" ? "rtl" : "ltr"}
-      className="w-full max-w-md bg-white/90 backdrop-blur-xl rounded-3xl shadow-xl border p-6 mb-10"
+      className="w-full max-w-md bg-white/90 rounded-3xl shadow-xl border p-6 mb-10"
       initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+      whileInView={{ opacity: 1 }}
     >
-      <h3 className="text-2xl font-bold text-green-700 text-center mb-4">
+      <h3 className="text-xl font-bold text-center text-green-700 mb-4">
         {t.contactTitle}
       </h3>
+
       <form className="space-y-3">
         <input
           placeholder={t.contactName}
@@ -524,6 +524,7 @@ function ContactSection({ lang, contact, setContact, t }) {
             setContact((c) => ({ ...c, name: e.target.value }))
           }
         />
+
         <input
           placeholder={t.contactEmail}
           className="w-full px-4 py-2 rounded-xl border"
@@ -532,6 +533,7 @@ function ContactSection({ lang, contact, setContact, t }) {
             setContact((c) => ({ ...c, email: e.target.value }))
           }
         />
+
         <textarea
           placeholder={t.contactMessage}
           className="w-full px-4 py-2 rounded-xl border"
@@ -541,6 +543,7 @@ function ContactSection({ lang, contact, setContact, t }) {
             setContact((c) => ({ ...c, message: e.target.value }))
           }
         />
+
         <button className="w-full py-2 rounded-xl bg-green-600 text-white font-semibold">
           {t.contactSend}
         </button>
@@ -549,13 +552,12 @@ function ContactSection({ lang, contact, setContact, t }) {
   );
 }
 
-/* ---------------- FOOTER ---------------- */
-
+/* -------------- FOOTER -------------- */
 function Footer() {
   return (
     <div className="flex gap-6 mb-10">
       {[FaLinkedin, FaInstagram, FaEnvelope].map((Icon, i) => (
-        <a key={i} href="#" className="text-3xl text-green-700">
+        <a key={i} href="#" className="text-2xl text-green-700">
           <Icon />
         </a>
       ))}
